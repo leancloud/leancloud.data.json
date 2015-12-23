@@ -133,7 +133,7 @@
 (defn- read-quoted-string [^PushbackReader stream]
   ;; Expects to be called with the head of the stream AFTER the
   ;; opening quotation mark.
-  (let [buffer (StringBuilder.)]
+  (let [buffer (StringBuilder. 10)]
     (loop []
       (let [c (.read stream)]
         (when (neg? c)
@@ -146,7 +146,7 @@
               (recur)))))))
 
 (defn- read-integer [^String string]
-  (if (< (count string) 18)  ; definitely fits in a Long
+  (if (< (.length string) 18)  ; definitely fits in a Long
     (Long/valueOf string)
     (or (try (Long/valueOf string)
              (catch NumberFormatException e nil))
@@ -158,7 +158,7 @@
     (Double/valueOf string)))
 
 (defn- read-number [^PushbackReader stream]
-  (let [buffer (StringBuilder.)
+  (let [buffer (StringBuilder. 4)
         decimal? (loop [decimal? false]
                    (let [c (.read stream)]
                      (codepoint-case c
@@ -288,9 +288,9 @@
     "Print object to PrintWriter out as JSON"))
 
 (defn- write-string [^CharSequence s ^PrintWriter out]
-  (let [sb (StringBuilder. (count s))]
+  (let [sb (StringBuilder. (.length s))]
     (.append sb \")
-    (dotimes [i (count s)]
+    (dotimes [i (.length s)]
       (let [cp (int (.charAt s i))]
         (codepoint-case cp
           ;; Printable JSON escapes
