@@ -11,7 +11,7 @@
   See http://www.json.org/"}
   leancloud.data.json
   (:refer-clojure :exclude (read))
-  (:require [clojure.pprint :as pprint])
+  (:require [leancloud.data.pprint :as pprint])
   (:import (java.io PrintWriter PushbackReader StringWriter
                     Writer StringReader EOFException)))
 
