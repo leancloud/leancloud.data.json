@@ -43,18 +43,15 @@
   (int c))
 
 (defn- codepoint-clause [[test result]]
-  (cond (list? test)
-        (tuple (map int test) result)
-        (= test :whitespace)
-        (tuple '(9 10 13 32) result)
-        (= test :simple-ascii)
-        (tuple (remove #{(codepoint \") (codepoint \\) (codepoint \/)}
-                       (range 32 127))
-               result)
-        (= test :js-separators)
-        (tuple '(16r2028 16r2029) result)
-        :else
-        (tuple (int test) result)))
+  (if (list? test)
+    (tuple (map int test) result)
+    (case test
+      :whitespace (tuple '(9 10 13 32) result)
+      :simple-ascii (tuple (remove #{(codepoint \") (codepoint \\) (codepoint \/)}
+                                   (range 32 127))
+                           result)
+      :js-separators (tuple '(16r2028 16r2029) result)
+      (tuple (int test) result))))
 
 (defmacro ^:private codepoint-case [e & clauses]
   `(case ~e

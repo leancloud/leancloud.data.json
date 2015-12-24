@@ -13,7 +13,6 @@
   (with-open [rdr (reader (resource "test.json"))]
     (json1/write-str (json1/read rdr))))
 
-
 (deftest test-benchmark
   (with-progress-reporting (bench (test-json1) :verbose))
   #_(with-progress-reporting (bench (test-json2) :verbose)))
