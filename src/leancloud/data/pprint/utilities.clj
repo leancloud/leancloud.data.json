@@ -37,7 +37,7 @@
 (defn- consume [func initial-context]
   (loop [context initial-context
          acc []]
-    (let [[result new-context] (apply func [context])]
+    (let [[result new-context] (func context)]
       (if (not result)
         [acc new-context]
       (recur new-context (conj acc result))))))
@@ -45,14 +45,14 @@
 (defn- consume-while [func initial-context]
   (loop [context initial-context
          acc []]
-    (let [[result continue new-context] (apply func [context])]
+    (let [[result continue new-context] (func context)]
       (if (not continue)
         [acc context]
       (recur new-context (conj acc result))))))
 
 (defn- unzip-map [m]
-  "Take a  map that has pairs in the value slots and produce a pair of maps, 
-   the first having all the first elements of the pairs and the second all 
+  "Take a  map that has pairs in the value slots and produce a pair of maps,
+   the first having all the first elements of the pairs and the second all
    the second elements of the pairs"
   [(into {} (for [[k [v1 v2]] m] [k v1]))
    (into {} (for [[k [v1 v2]] m] [k v2]))])
@@ -66,7 +66,7 @@
   (let [len (count s)]
     (if (and (pos? len) (= (nth s (dec (count s))) c))
       (loop [n (dec len)]
-        (cond 
+        (cond
          (neg? n) ""
          (not (= (nth s n) c)) (subs s 0 (inc n))
          true (recur (dec n))))
@@ -83,7 +83,7 @@
       s)))
 
 (defn- prefix-count [aseq val]
-  "Return the number of times that val occurs at the start of sequence aseq, 
+  "Return the number of times that val occurs at the start of sequence aseq,
 if val is a seq itself, count the number of times any element of val occurs at the
 beginning of aseq"
   (let [test (if (coll? val) (set val) #{val})]
@@ -96,10 +96,10 @@ beginning of aseq"
   "Println to *err*"
   (binding [*out* *err*]
     (apply println args)))
-       
+
 (defmacro ^{:private true} prlabel [prefix arg & more-args]
   "Print args to *err* in name = value format"
-  `(prerr ~@(cons (list 'quote prefix) (mapcat #(list (list 'quote %) "=" %) 
+  `(prerr ~@(cons (list 'quote prefix) (mapcat #(list (list 'quote %) "=" %)
                                                   (cons arg (seq more-args))))))
 
 ;; Flush the pretty-print buffer without flushing the underlying stream

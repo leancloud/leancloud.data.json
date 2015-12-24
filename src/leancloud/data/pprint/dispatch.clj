@@ -27,7 +27,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Handle forms that can be "back-translated" to reader macros
-;;; Not all reader macros can be dealt with this way or at all. 
+;;; Not all reader macros can be dealt with this way or at all.
 ;;; Macros that we can't deal with at all are:
 ;;; ;  - The comment character is absorbed by the reader and never is part of the form
 ;;; `  - Is fully processed at read time into a lisp expression (which will contain concats
@@ -43,7 +43,7 @@
 ;;; :keyword, \char, or ""). The notable exception is #() which is special-cased.
 
 (def ^{:private true} reader-macros
-     {'quote "'", 'clojure.core/deref "@", 
+     {'quote "'", 'clojure.core/deref "@",
       'var "#'", 'clojure.core/unquote "~"})
 
 (defn- pprint-reader-macro [alis]
@@ -95,7 +95,7 @@
   (pprint-logical-block :prefix "{" :suffix "}"
     (print-length-loop [aseq (seq amap)]
       (when aseq
-	(pprint-logical-block 
+	(pprint-logical-block
           (write-out (ffirst aseq))
           (.write ^java.io.Writer *out* " ")
           (pprint-newline :linear)
@@ -108,11 +108,11 @@
 
 (def ^{:private true} pprint-set (formatter-out "~<#{~;~@{~w~^ ~:_~}~;}~:>"))
 
-(def ^{:private true} 
+(def ^{:private true}
      type-map {"core$future_call" "Future",
                "core$promise" "Promise"})
 
-(defn- map-ref-type 
+(defn- map-ref-type
   "Map ugly type names to something simpler"
   [name]
   (or (when-let [match (re-find #"^[^$]+\$[^$]+" name)]
@@ -130,7 +130,7 @@
     (pprint-logical-block  :prefix prefix :suffix ">"
                            (pprint-indent :block (-> (count prefix) (- 2) -))
                            (pprint-newline :linear)
-                           (write-out (cond 
+                           (write-out (cond
                                        (and (future? o) (not (future-done? o))) :pending
                                        (and (instance? clojure.lang.IPending o) (not (.isRealized o))) :not-delivered
                                        :else @o)))))
@@ -138,16 +138,16 @@
 (def ^{:private true} pprint-pqueue (formatter-out "~<<-(~;~@{~w~^ ~_~}~;)-<~:>"))
 
 (defn- pprint-simple-default [obj]
-  (cond 
+  (cond
     (.isArray (class obj)) (pprint-array obj)
     (and *print-suppress-namespaces* (symbol? obj)) (print (name obj))
     :else (pr obj)))
 
 
-(defmulti 
+(defmulti
   simple-dispatch
   "The pretty print dispatch function for simple data structure format."
-  {:added "1.2" :arglists '[[object]]} 
+  {:added "1.2" :arglists '[[object]]}
   class)
 
 (use-method simple-dispatch clojure.lang.ISeq pprint-list)
@@ -215,7 +215,7 @@
 (defn- pprint-ns
   "The pretty print dispatch chunk for the ns macro"
   [alis]
-  (if (next alis) 
+  (if (next alis)
     (let [[ns-sym ns-name & stuff] alis
           [doc-str stuff] (if (string? (first stuff))
                             [(first stuff) (next stuff)]
@@ -263,10 +263,10 @@
   (if (seq alis)
     ((formatter-out " ~_~{~w~^ ~_~}") alis)))
 
-;;; TODO: figure out how to support capturing metadata in defns (we might need a 
+;;; TODO: figure out how to support capturing metadata in defns (we might need a
 ;;; special reader)
 (defn- pprint-defn [alis]
-  (if (next alis) 
+  (if (next alis)
     (let [[defn-sym defn-name & stuff] alis
           [doc-str stuff] (if (string? (first stuff))
                             [(first stuff) (next stuff)]
@@ -343,7 +343,7 @@
            (recur (next (rest alis)))))))))
 
 (defn- pprint-condp [alis]
-  (if (> (count alis) 3) 
+  (if (> (count alis) 3)
     (pprint-logical-block :prefix "(" :suffix ")"
       (pprint-indent :block 1)
       (apply (formatter-out "~w ~@_~w ~@_~w ~_") alis)
@@ -368,12 +368,12 @@
   (let [args (second alis)
         nlis (first (rest (rest alis)))]
     (if (vector? args)
-      (binding [*symbol-map* (if (= 1 (count args)) 
+      (binding [*symbol-map* (if (= 1 (count args))
                                {(first args) "%"}
-                               (into {} 
-                                     (map 
-                                      #(vector %1 (str \% %2)) 
-                                      args 
+                               (into {}
+                                     (map
+                                      #(vector %1 (str \% %2))
+                                      args
                                       (range 1 (inc (count args))))))]
         ((formatter-out "~<#(~;~@{~w~^ ~_~}~;)~:>") nlis))
       (pprint-simple-code-list alis))))
@@ -400,16 +400,16 @@
 ;;; Take a map with symbols as keys and add versions with no namespace.
 ;;; That is, if ns/sym->val is in the map, add sym->val to the result.
 (defn- two-forms [amap]
-  (into {} 
-        (mapcat 
-         identity 
-         (for [x amap] 
+  (into {}
+        (mapcat
+         identity
+         (for [x amap]
            [x [(symbol (name (first x))) (second x)]]))))
 
 (defn- add-core-ns [amap]
   (let [core "clojure.core"]
     (into {}
-          (map #(let [[s f] %] 
+          (map #(let [[s f] %]
                   (if (not (or (namespace s) (special-symbol? s)))
                     [(symbol core (name s)) f]
                     %))
@@ -418,7 +418,7 @@
 (def ^:dynamic ^{:private true} *code-table*
      (two-forms
       (add-core-ns
-       {'def pprint-hold-first, 'defonce pprint-hold-first, 
+       {'def pprint-hold-first, 'defonce pprint-hold-first,
 	'defn pprint-defn, 'defn- pprint-defn, 'defmacro pprint-defn, 'fn pprint-defn,
         'let pprint-let, 'loop pprint-let, 'binding pprint-let,
         'with-local-vars pprint-let, 'with-open pprint-let, 'when-let pprint-let,
@@ -429,26 +429,26 @@
         'fn* pprint-anon-func,
         '. pprint-hold-first, '.. pprint-hold-first, '-> pprint-hold-first,
         'locking pprint-hold-first, 'struct pprint-hold-first,
-        'struct-map pprint-hold-first, 'ns pprint-ns 
+        'struct-map pprint-hold-first, 'ns pprint-ns
         })))
 
 (defn- pprint-code-list [alis]
-  (if-not (pprint-reader-macro alis) 
+  (if-not (pprint-reader-macro alis)
     (if-let [special-form (*code-table* (first alis))]
       (special-form alis)
       (pprint-simple-code-list alis))))
 
-(defn- pprint-code-symbol [sym] 
+(defn- pprint-code-symbol [sym]
   (if-let [arg-num (sym *symbol-map*)]
     (print arg-num)
-    (if *print-suppress-namespaces* 
+    (if *print-suppress-namespaces*
       (print (name sym))
       (pr sym))))
 
-(defmulti 
+(defmulti
   code-dispatch
   "The pretty print dispatch function for pretty printing Clojure code."
-  {:added "1.2" :arglists '[[object]]} 
+  {:added "1.2" :arglists '[[object]]}
   class)
 
 (use-method code-dispatch clojure.lang.ISeq pprint-code-list)
@@ -469,35 +469,35 @@
 ;;; For testing
 (comment
 
-(with-pprint-dispatch code-dispatch 
-  (pprint 
-   '(defn cl-format 
+(with-pprint-dispatch code-dispatch
+  (pprint
+   '(defn cl-format
       "An implementation of a Common Lisp compatible format function"
       [stream format-in & args]
       (let [compiled-format (if (string? format-in) (compile-format format-in) format-in)
             navigator (init-navigator args)]
         (execute-format stream compiled-format navigator)))))
 
-(with-pprint-dispatch code-dispatch 
-  (pprint 
-   '(defn cl-format 
+(with-pprint-dispatch code-dispatch
+  (pprint
+   '(defn cl-format
       [stream format-in & args]
       (let [compiled-format (if (string? format-in) (compile-format format-in) format-in)
             navigator (init-navigator args)]
         (execute-format stream compiled-format navigator)))))
 
-(with-pprint-dispatch code-dispatch 
+(with-pprint-dispatch code-dispatch
   (pprint
-   '(defn- -write 
+   '(defn- -write
       ([this x]
          (condp = (class x)
-           String 
+           String
            (let [s0 (write-initial-lines this x)
                  s (.replaceFirst s0 "\\s+$" "")
                  white-space (.substring s0 (count s))
                  mode (getf :mode)]
              (if (= mode :writing)
-               (dosync
+               (do
                 (write-white-space this)
                 (.col_write this s)
                 (setf :trailing-white-space white-space))
@@ -506,17 +506,17 @@
            Integer
            (let [c ^Character x]
              (if (= (getf :mode) :writing)
-               (do 
+               (do
                  (write-white-space this)
                  (.col_write this x))
                (if (= c (int \newline))
                  (write-initial-lines this "\n")
                  (add-to-buffer this (make-buffer-blob (str (char c)) nil))))))))))
 
-(with-pprint-dispatch code-dispatch 
-  (pprint 
+(with-pprint-dispatch code-dispatch
+  (pprint
    '(defn pprint-defn [writer alis]
-      (if (next alis) 
+      (if (next alis)
         (let [[defn-sym defn-name & stuff] alis
               [doc-str stuff] (if (string? (first stuff))
                                 [(first stuff) (next stuff)]
@@ -537,4 +537,3 @@
         (pprint-simple-code-list writer alis)))))
 )
 nil
-

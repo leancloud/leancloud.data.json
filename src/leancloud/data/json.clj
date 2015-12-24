@@ -9,9 +9,10 @@
 (ns ^{:author "Stuart Sierra"
       :doc "JavaScript Object Notation (JSON) parser/generator.
   See http://www.json.org/"}
-  leancloud.data.json
+    leancloud.data.json
   (:refer-clojure :exclude (read))
-  (:require [leancloud.data.pprint :as pprint])
+  (:require [leancloud.data.pprint :as pprint]
+            [clj-tuple :refer [tuple]])
   (:import (java.io PrintWriter PushbackReader StringWriter
                     Writer StringReader EOFException)))
 
@@ -21,13 +22,18 @@
 (def ^{:dynamic true :private true} *key-fn*)
 (def ^{:dynamic true :private true} *value-fn*)
 
-(defn- default-write-key-fn
-  [x]
-  (cond (instance? clojure.lang.Named x)
-        (name x)
-        (nil? x)
-        (throw (Exception. "JSON object properties may not be nil"))
-        :else (str x)))
+(defprotocol write-key-fn-protocol
+  (default-write-key-fn [this]))
+
+(extend-protocol write-key-fn-protocol
+  clojure.lang.Named
+  (default-write-key-fn [x] (name x))
+  nil
+  (default-write-key-fn [_] (throw (Exception. "JSON object properties may not be nil")))
+  String
+  (default-write-key-fn [s] s)
+  Object
+  (default-write-key-fn [x] (str x)))
 
 (defn- default-value-fn [k v] v)
 
@@ -38,23 +44,23 @@
 
 (defn- codepoint-clause [[test result]]
   (cond (list? test)
-        [(map int test) result]
+        (tuple (map int test) result)
         (= test :whitespace)
-        ['(9 10 13 32) result]
+        (tuple '(9 10 13 32) result)
         (= test :simple-ascii)
-        [(remove #{(codepoint \") (codepoint \\) (codepoint \/)}
-                 (range 32 127))
-         result]
+        (tuple (remove #{(codepoint \") (codepoint \\) (codepoint \/)}
+                       (range 32 127))
+               result)
         (= test :js-separators)
-        ['(16r2028 16r2029) result]
+        (tuple '(16r2028 16r2029) result)
         :else
-        [(int test) result]))
+        (tuple (int test) result)))
 
 (defmacro ^:private codepoint-case [e & clauses]
   `(case ~e
      ~@(mapcat codepoint-clause (partition 2 clauses))
      ~@(when (odd? (count clauses))
-         [(last clauses)])))
+         (tuple (last clauses)))))
 
 (defn- read-array [^PushbackReader stream]
   ;; Expects to be called with the head of the stream AFTER the
@@ -285,7 +291,7 @@
 
 (defprotocol JSONWriter
   (-write [object out]
-    "Print object to PrintWriter out as JSON"))
+          "Print object to PrintWriter out as JSON"))
 
 (defn- write-string [^CharSequence s ^PrintWriter out]
   (let [sb (StringBuilder. (.length s))]
