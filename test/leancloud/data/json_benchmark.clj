@@ -14,5 +14,5 @@
     (json1/write-str (json1/read rdr))))
 
 (deftest test-benchmark
-  (with-progress-reporting (bench (test-json1) :verbose))
-  #_(with-progress-reporting (bench (test-json2) :verbose)))
+  #_(with-progress-reporting (bench (test-json1) :verbose))
+  (with-progress-reporting (bench (test-json2) :verbose)))

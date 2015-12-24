@@ -1,4 +1,4 @@
-(defproject leancloud.data.json "0.1.0-SNAPSHOT"
+(defproject leancloud.data.json "0.1.0-RC1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
