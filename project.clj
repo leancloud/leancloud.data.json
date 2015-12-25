@@ -4,6 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]]
+  :java-source-paths ["src/jvm"]
+  :source-paths ["src/clj"]
   :jvm-opts ["-Xmx1g" "-server" "-XX:MaxPermSize=256m" "-XX:+UseConcMarkSweepGC" "-XX:+UseCMSCompactAtFullCollection" "-Dclojure.compiler.elide-meta='[:doc :added]'"]
   :profiles {:dev {:dependencies [[criterium "0.4.3"]
                                   [clj-tuple "0.1.6"]
