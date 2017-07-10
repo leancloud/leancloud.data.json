@@ -300,6 +300,17 @@
   (-write [object out]
           "Print object to PrintWriter out as JSON"))
 
+(defn- format-int-hex [^long cp]
+  (let [^String s (Long/toHexString cp)]
+    (str "\\u"
+         (case (- 4 (.length s))
+           1 "0"
+           2 "00"
+           3 "000"
+           4 "0000"
+           "")
+         s)))
+
 (defn- write-string [^CharSequence s ^PrintWriter out]
   (let [sb (StringBuilder. (.length s))]
     (.append sb \")
@@ -320,11 +331,11 @@
           \tab       (.append sb "\\t")
           ;; Unicode characters that Javascript forbids raw in strings
           :js-separators (if *escape-js-separators*
-                           (.append sb (format "\\u%04x" cp))
+                           (.append sb (format-int-hex cp))
                            (.appendCodePoint sb cp))
           ;; Any other character is Unicode
           (if *escape-unicode*
-            (.append sb (format "\\u%04x" cp)) ; Hexadecimal-escaped
+            (.append sb (format-int-hex cp)) ; Hexadecimal-escaped
             (.appendCodePoint sb cp)))))
     (.append sb \")
     (.print out (str sb))))
