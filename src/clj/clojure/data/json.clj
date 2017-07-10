@@ -149,9 +149,18 @@
           (do (.append buffer (char c))
               (recur)))))))
 
+(defonce ^:private integers-cache
+  (->> 1000
+       (range -1000)
+       (map (fn [n]
+              [(str n) n]))
+       (into {})))
+
 (defn- read-integer [^String string]
-  (if (< (.length string) 18)  ; definitely fits in a Long
-    (Long/valueOf string)
+  (if (< (.length string) 18)          ; definitely fits in a Long
+    (or
+     (get integers-cache string)
+     (Long/valueOf string))
     (or (try (Long/valueOf string)
              (catch NumberFormatException e nil))
         (bigint string))))
